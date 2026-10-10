@@ -55,7 +55,8 @@ OpenMP, BLAS, native-CPU tuning, and qualification fault injection. Rust is
 compiled for the x86-64 baseline, not `target-cpu=native`.
 
 Install Debian build prerequisites (`build-essential`, `ca-certificates`,
-`cargo`, `cmake`, `debhelper`, `git`, `python3`, and `rustc`) and make the
+`cargo`, `cmake`, `debhelper`, `dpkg-dev`, `git`, `pkg-config`, `python3`, and
+`rustc`) and make the
 pinned Rust toolchain available first in `PATH`:
 
 ```sh

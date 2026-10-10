@@ -41,7 +41,7 @@ override_dh_auto_configure:
 		-DVBUF_ENABLE_UNVALIDATED_QUALIFICATION_TRIALS=OFF
 
 override_dh_auto_build:
-	dh_auto_build -- --target=vbuf_compat_server
+	dh_auto_build -- vbuf_compat_server
 
 override_dh_auto_test:
 	LD_LIBRARY_PATH="$(CARGO_TARGET_DIR)/release" debian/build/vbuf_compat_server --help >/dev/null

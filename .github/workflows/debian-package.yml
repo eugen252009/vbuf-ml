@@ -23,7 +23,7 @@ jobs:
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             build-essential ca-certificates cargo cmake curl debhelper dpkg-dev \
-            git lintian python3 rustc
+            git lintian pkg-config python3 rustc
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Install the pinned Rust toolchain
