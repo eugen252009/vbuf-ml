@@ -1,0 +1,60 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all reproducible=+all
+export LC_ALL = C.UTF-8
+export TZ = UTC
+export RUSTUP_TOOLCHAIN = 1.95.0
+export CARGO_TARGET_DIR = $(CURDIR)/debian/rust-target
+export CARGO_PROFILE_RELEASE_DEBUG = 0
+export CARGO_INCREMENTAL = 0
+export CARGO_BUILD_JOBS = 2
+export CARGO_NET_OFFLINE = true
+export RUSTFLAGS = -C target-cpu=x86-64 --remap-path-prefix=$(CURDIR)=.
+
+VBUF_ML_LIBRARY = $(CARGO_TARGET_DIR)/release/libvbuf_ml.so
+
+%:
+	dh $@ --buildsystem=cmake --sourcedirectory=integrations/ggml --builddirectory=debian/build
+
+override_dh_auto_configure:
+	test -n "$(VBUF_GGML_SOURCE_DIR)" || { echo 'VBUF_GGML_SOURCE_DIR must name the pinned, clean GGML checkout' >&2; exit 1; }
+	test -n "$(VBUF_BUILD_PROVENANCE_FILE)" -a -f "$(VBUF_BUILD_PROVENANCE_FILE)" || { echo 'build provenance input is missing' >&2; exit 1; }
+	cp "$(VBUF_BUILD_PROVENANCE_FILE)" debian/vbuf-ml-build-provenance.json
+	cargo build --locked --offline --release --manifest-path rust/Cargo.toml -p vbuf-ml --lib
+	test -f "$(VBUF_ML_LIBRARY)" || { echo 'the locked vbuf-ml Rust cdylib must be built before CMake configuration' >&2; exit 1; }
+	dh_auto_configure -- \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
+		-DCMAKE_INSTALL_RPATH='$$ORIGIN/lib' \
+		-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=OFF \
+		-DBUILD_SHARED_LIBS=OFF \
+		-DGGML_NATIVE=OFF \
+		-DVBUF_GGML_SOURCE_DIR="$(VBUF_GGML_SOURCE_DIR)" \
+		-DVBUF_ML_LIBRARY="$(VBUF_ML_LIBRARY)" \
+		-DVBUF_ENABLE_CUDA=OFF \
+		-DVBUF_ENABLE_CPU_REPACK=OFF \
+		-DVBUF_BUILD_PROBES=ON \
+		-DVBUF_BUILD_COMPAT_SERVER=ON \
+		-DVBUF_BUILD_REAL_GATE2B=OFF \
+		-DVBUF_BUILD_MOE_GROUPING_MICROQUALIFICATION=OFF \
+		-DVBUF_ENABLE_UNVALIDATED_QUALIFICATION_TRIALS=OFF
+
+override_dh_auto_build:
+	dh_auto_build -- --target=vbuf_compat_server
+
+override_dh_auto_test:
+	LD_LIBRARY_PATH="$(CARGO_TARGET_DIR)/release" debian/build/vbuf_compat_server --help >/dev/null
+
+override_dh_auto_install:
+	# The upstream CMake project intentionally has no install target; dh_install selects the runtime files.
+
+override_dh_makeshlibs:
+	dh_makeshlibs -Xlibvbuf_ml.so
+
+override_dh_shlibdeps:
+	dh_shlibdeps -l$(CURDIR)/debian/vbuf-ml/usr/lib/vbuf-ml/lib
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf debian/rust-target

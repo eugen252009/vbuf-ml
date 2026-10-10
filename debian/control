@@ -1,0 +1,29 @@
+Source: vbuf-ml
+Section: utils
+Priority: optional
+Maintainer: Eugen <eugen252009@gmail.com>
+Build-Depends:
+ ca-certificates,
+ cargo,
+ cmake (>= 3.18),
+ debhelper-compat (= 13),
+ g++,
+ git,
+ make,
+ python3,
+ rustc
+Standards-Version: 4.7.0
+Homepage: https://github.com/eugen252009/vbuf-ml
+Rules-Requires-Root: no
+
+Package: vbuf-ml
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: CPU-only vBuf-ML compatibility runtime (Alpha)
+ A small OpenAI-compatible vBuf-ML runtime package for Debian amd64. It
+ includes the existing vbuf_compat_server target and its private Rust
+ vBuf-ML consumer library. No model weights or payloads are included.
+ .
+ This is an Alpha distribution, not a general model-support or coding-agent
+ qualification. CUDA is disabled. Qwen3-8B remains explicitly experimental,
+ and Native AV remains stopped and fail-closed.

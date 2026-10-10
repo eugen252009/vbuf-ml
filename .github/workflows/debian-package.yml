@@ -1,0 +1,72 @@
+name: Debian package qualification
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-lifecycle:
+    runs-on: ubuntu-24.04
+    container:
+      image: debian@sha256:a99cfc517144bc59b1978475ec53b46ecabec7e43635402ee5b77cc54cd1b20a
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Install Debian build and test tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            build-essential ca-certificates cargo cmake curl debhelper dpkg-dev \
+            git lintian python3 rustc
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Install the pinned Rust toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
+            sh -s -- -y --profile minimal --default-toolchain 1.95.0
+          export PATH="$HOME/.cargo/bin:$PATH"
+          rustc --version
+          cargo --version
+          test "$(rustc --version | awk '{print $2}')" = 1.95.0
+          test "$(cargo --version | awk '{print $2}')" = 1.95.0
+
+      - name: Test tag mapping and Debian ordering
+        run: |
+          python3 -m unittest discover -s scripts/tests -p 'test_debian_package_versions.py' -v
+          python3 packaging/debian/build.py version --tag alpha-0.1.0
+          python3 packaging/debian/build.py version --tag beta-0.1.0.2
+          python3 packaging/debian/build.py version --tag release-0.1.0
+
+      - name: Select unique synthetic Alpha versions for lifecycle testing
+        run: |
+          python3 - <<'PY' >> "$GITHUB_ENV"
+          import os
+          sequence = max(int(os.environ["GITHUB_SHA"][:8], 16), 2)
+          print(f"ALPHA_OLD_TAG=alpha-0.0.0.{sequence}")
+          print(f"ALPHA_NEW_TAG=alpha-0.0.0.{sequence + 1}")
+          PY
+
+      - name: Build reproducibly and run package metadata checks
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          export VBUF_BUILD_IMAGE='debian@sha256:a99cfc517144bc59b1978475ec53b46ecabec7e43635402ee5b77cc54cd1b20a'
+          python3 packaging/debian/build.py build \
+            --candidate-tag "$ALPHA_OLD_TAG" \
+            --output /tmp/vbuf-ml-ci \
+            --check-reproducibility
+          python3 packaging/debian/build.py build \
+            --candidate-tag "$ALPHA_NEW_TAG" \
+            --output /tmp/vbuf-ml-ci
+          lintian --fail-on error /tmp/vbuf-ml-ci/vbuf-ml_*.deb
+
+      - name: Exercise APT install, reinstall, upgrade, remove, and purge
+        run: |
+          scripts/tests/debian-package-lifecycle-smoke.sh \
+            "/tmp/vbuf-ml-ci/vbuf-ml_$(python3 packaging/debian/build.py version --tag "$ALPHA_OLD_TAG" | python3 -c 'import json,sys; print(json.load(sys.stdin)["debian_version"])')_amd64.deb" \
+            "/tmp/vbuf-ml-ci/vbuf-ml_$(python3 packaging/debian/build.py version --tag "$ALPHA_NEW_TAG" | python3 -c 'import json,sys; print(json.load(sys.stdin)["debian_version"])')_amd64.deb"

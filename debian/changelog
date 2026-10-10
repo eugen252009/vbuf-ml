@@ -1,0 +1,5 @@
+vbuf-ml (0.1.0~alpha-1) alpha; urgency=low
+
+  * Initial CPU-only Alpha package of the existing vBuf-ML compatibility server.
+
+ -- Eugen <eugen252009@gmail.com>  Sun, 29 Mar 2026 00:00:00 +0000

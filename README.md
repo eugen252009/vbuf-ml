@@ -125,6 +125,17 @@ See the [serving qualification](research/results/vbuf-ml-integration/step31r-vbu
 [persistent-process lifecycle tests](research/results/vbuf-ml-integration/step31s-persistent-server-lifecycle-qualification.md),
 and [concurrency limits](research/results/vbuf-ml-integration/step31z-shared-residency-concurrency.md).
 
+## Debian Alpha Package
+
+A narrow CPU-only Debian `amd64` Alpha package is being prepared for the
+existing `vbuf_compat_server` and its private Rust vBuf-ML consumer library.
+It does not include models, install a service, or qualify model inference,
+Qwen3-8B as a coding agent, CUDA, or Native AV. The package-to-suite mapping,
+reproducible build instructions, installation limitations, and current TPA.run
+multi-suite blocker are documented in the
+[Debian Alpha packaging guide](docs/vbuf-ml/debian-alpha.md). No hosted APT
+repository or signing key is configured by this repository.
+
 ## Limits And Historical Evidence
 
 - The portable GLM CPU path converts demanded FP8/BF16 weights into bounded F32
