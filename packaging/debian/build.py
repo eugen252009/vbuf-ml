@@ -177,7 +177,7 @@ def build_environment(architecture: str) -> dict[str, Any]:
         "rustc": tool_version(["rustc", "--version"]),
         "dpkg_buildpackage": tool_version(["dpkg-buildpackage", "--version"]),
         "dpkg_deb": tool_version(["dpkg-deb", "--version"]),
-        "debhelper": tool_version(["dh", "--version"]),
+        "debhelper": tool_version(["dpkg-query", "-W", "-f=${Version}", "debhelper"]),
         "python": tool_version([sys.executable, "--version"]),
     }
     rustup = shutil.which("rustup")
