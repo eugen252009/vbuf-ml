@@ -1,0 +1,16 @@
+# Local verification commands; run from /home/eugen/projekte/tparun-apt-suite-support
+/usr/local/go/bin/go test ./... -count=1
+/usr/local/go/bin/go vet ./...
+TPARUN_VBUF_ALPHA_APT_QUALIFICATION=1 \
+  VBUF_ALPHA_PACKAGE_V1=/tmp/vbuf-ml-deb-alpha/packages/vbuf-ml_0.1.0~alpha-1_amd64.deb \
+  VBUF_ALPHA_PACKAGE_V2=/tmp/vbuf-ml-deb-alpha/packages/vbuf-ml_0.1.0~alpha.2-1_amd64.deb \
+  /usr/local/go/bin/go test ./cmd/tparun \
+    -run '^TestVBufMLAlphaAPTInstallAndUpgrade$' -count=1 -v
+
+# Read-only hosted version marker check
+curl -fsS --max-time 15 https://tpa.run/version
+
+# TPA.run feature branch status
+git status --short --branch
+git rev-parse HEAD
+git merge-base HEAD b615d7e0309e629784f52a718b26b578abb6c300

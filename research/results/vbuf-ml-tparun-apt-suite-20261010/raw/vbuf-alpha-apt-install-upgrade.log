@@ -1,0 +1,35 @@
+=== RUN   TestVBufMLAlphaAPTInstallAndUpgrade
+    vbuf_alpha_apt_qualification_test.go:40: verified package identities and SHA-256: vbuf-ml_0.1.0~alpha-1_amd64.deb (0.1.0~alpha-1, ba6b5cc2...) and vbuf-ml_0.1.0~alpha.2-1_amd64.deb (0.1.0~alpha.2-1, 7559de42...)
+2026/10/10 22:11:13 publish job queued id=bad6cbad507976c9a55d9254f403c0f2 repository=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bytes=1608876
+2026/10/10 22:11:13 publish job started id=bad6cbad507976c9a55d9254f403c0f2
+2026/10/10 22:11:13 publication runner attempt started job=bad6cbad507976c9a55d9254f403c0f2 attempt=ce6c75d15cb6b03fe332261e25a45f53 backend= started_at=2026-10-10T20:11:13.667041676Z
+2026/10/10 22:11:13 publish job succeeded id=bad6cbad507976c9a55d9254f403c0f2
+    vbuf_alpha_apt_qualification_test.go:126: published vbuf-ml_0.1.0~alpha-1_amd64.deb through local TPA.run worker: job=bad6cbad507976c9a55d9254f403c0f2
+    vbuf_alpha_apt_qualification_test.go:132: generation advertises only dists/alpha with Suite=alpha and Codename=alpha
+    vbuf_alpha_apt_qualification_test.go:137: using disposable Debian 13 APT client image debian@sha256:a99cfc517144bc59b1978475ec53b46ecabec7e43635402ee5b77cc54cd1b20a
+    vbuf_alpha_apt_qualification_test.go:181: Debian 13 APT command succeeded: update
+    vbuf_alpha_apt_qualification_test.go:182: Debian 13 APT command succeeded: install -y --no-install-recommends vbuf-ml=0.1.0~alpha-1
+    vbuf_alpha_apt_qualification_test.go:183: dpkg-query confirms installed vbuf-ml version 0.1.0~alpha-1
+2026/10/10 22:11:14 publish job queued id=5315199b699ece4c02f597b7b18fdbc8 repository=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bytes=1610136
+2026/10/10 22:11:14 publish job started id=5315199b699ece4c02f597b7b18fdbc8
+2026/10/10 22:11:14 publication runner attempt started job=5315199b699ece4c02f597b7b18fdbc8 attempt=eb7a53729ae7bac905e220d1eea962f1 backend= started_at=2026-10-10T20:11:14.626516509Z
+2026/10/10 22:11:14 publish job succeeded id=5315199b699ece4c02f597b7b18fdbc8
+    vbuf_alpha_apt_qualification_test.go:185: published vbuf-ml_0.1.0~alpha.2-1_amd64.deb through local TPA.run worker: job=5315199b699ece4c02f597b7b18fdbc8
+    vbuf_alpha_apt_qualification_test.go:191: generation advertises only dists/alpha with Suite=alpha and Codename=alpha
+    vbuf_alpha_apt_qualification_test.go:192: Debian 13 APT command succeeded: update
+    vbuf_alpha_apt_qualification_test.go:193: Debian 13 APT command succeeded: -s install vbuf-ml
+    vbuf_alpha_apt_qualification_test.go:197: APT upgrade simulation selected the newer Alpha candidate:
+        Reading package lists...
+        Building dependency tree...
+        Reading state information...
+        The following packages will be upgraded:
+          vbuf-ml
+        1 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+        Inst vbuf-ml [0.1.0~alpha-1] (0.1.0~alpha.2-1 TPA-Repo:alpha [amd64])
+        Conf vbuf-ml (0.1.0~alpha.2-1 TPA-Repo:alpha [amd64])
+    vbuf_alpha_apt_qualification_test.go:198: Debian 13 APT command succeeded: install -y --no-install-recommends vbuf-ml=0.1.0~alpha.2-1
+    vbuf_alpha_apt_qualification_test.go:199: dpkg-query confirms installed vbuf-ml version 0.1.0~alpha.2-1
+    vbuf_alpha_apt_qualification_test.go:203: installed vbuf_compat_server --help smoke check passed (799 output bytes)
+--- PASS: TestVBufMLAlphaAPTInstallAndUpgrade (2.35s)
+PASS
+ok  	github.com/eugen252009/tpahub/cmd/tparun	2.351s

@@ -1,0 +1,22 @@
+ok  	github.com/eugen252009/tpahub/cmd/tparun	54.945s
+?   	github.com/eugen252009/tpahub/cmd/tparun-updater	[no test files]
+ok  	github.com/eugen252009/tpahub/internal/admission	0.150s
+ok  	github.com/eugen252009/tpahub/internal/aptsuite	0.008s
+?   	github.com/eugen252009/tpahub/internal/billing	[no test files]
+ok  	github.com/eugen252009/tpahub/internal/commerce	0.004s
+ok  	github.com/eugen252009/tpahub/internal/config	0.010s
+ok  	github.com/eugen252009/tpahub/internal/deployment	0.009s
+ok  	github.com/eugen252009/tpahub/internal/deployment/adapters	0.211s
+?   	github.com/eugen252009/tpahub/internal/enforcement	[no test files]
+ok  	github.com/eugen252009/tpahub/internal/githubrelease	0.323s
+ok  	github.com/eugen252009/tpahub/internal/hostedbilling	0.024s
+?   	github.com/eugen252009/tpahub/internal/payments	[no test files]
+ok  	github.com/eugen252009/tpahub/internal/payments/stripe	0.006s
+?   	github.com/eugen252009/tpahub/internal/provisioning	[no test files]
+ok  	github.com/eugen252009/tpahub/internal/store	4.242s
+ok  	github.com/eugen252009/tpahub/internal/tpa	1.939s
+?   	github.com/eugen252009/tpahub/internal/tpahubcapability	[no test files]
+ok  	github.com/eugen252009/tpahub/internal/tpahubproduct	0.006s
+ok  	github.com/eugen252009/tpahub/internal/updater	0.090s
+ok  	github.com/eugen252009/tpahub/internal/usage	0.030s
+?   	github.com/eugen252009/tpahub/internal/version	[no test files]

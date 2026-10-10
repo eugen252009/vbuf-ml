@@ -27,6 +27,8 @@ The original research documents and their Git history are preserved for reproduc
 - **2026-10-10** — [Tool-cycle fixture](results/vbuf-ml-integration/pi-agent-qwen3-8b-second-turn-replay/raw/pi-sessions/multiturn-vbuf-01/generated-project/README.md)
 - **2026-10-10** — [Tool-cycle fixture](results/vbuf-ml-integration/pi-agent-qwen3-8b-second-turn-replay/raw/pi-sessions/multiturn-vbuf-02/generated-project/README.md)
 - **2026-10-10** — [Tool-cycle fixture](results/vbuf-ml-integration/pi-agent-qwen3-8b-second-turn-replay/raw/pi-sessions/multiturn-vbuf-03/generated-project/README.md)
+- **2026-10-10** — [TPA.run APT-suite support and vBuf-ML Alpha qualification](results/vbuf-ml-tparun-apt-suite-20261010.md)
+  - Summary: Local TPA.run APT-suite support and vBuf-ML Alpha install/upgrade passed; hosted suite support remains unverified.
 - **2026-10-09** — [Independent high-precision tensor-operation reference qualification](results/vbuf-ml-integration/qwen3-independent-tensor-reference-qualification.md)
 - **2026-10-09** — [Native-layout AV divergence investigation checkpoint](results/vbuf-ml-integration/qwen3-numerical-propagation/native-av-divergence-investigation-checkpoint-v1.md)
 - **2026-10-09** — [Qwen3 native-layout attention AV prototype](results/vbuf-ml-integration/qwen3-native-layout-av/README.md)

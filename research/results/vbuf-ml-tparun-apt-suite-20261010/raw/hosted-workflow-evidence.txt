@@ -1,0 +1,26 @@
+TPA.run source branch: feature/apt-suite-support-20261011
+TPA.run feature commit: ace7281506860c6677e38f57a8e484b0f75a7402
+TPA.run feature base: b615d7e0309e629784f52a718b26b578abb6c300
+Deployment hook SHA-256: 69b1d2e22088ff57dcfa408d543d85be769a3fcff89f4e4fd52013d8fe1449f3  /home/eugen/projekte/tparun-apt-suite-support/deploy/deploy-tpahub
+
+Deployment controls:
+10:DB=${DB:-$DATA_DIR/tpahub.db}
+28:CURRENT_SCHEMA=11
+29:ALLOW_SCHEMA_MIGRATION=${TPARUN_ALLOW_SCHEMA_MIGRATION:-false}
+36:[[ "$DATA_DIR" == "$PROD_ROOT/data" && "$DB" == "$DATA_DIR/tpahub.db" ]] || { echo 'unexpected production data path' >&2; exit 1; }
+43:commit=$(git --git-dir="$REPO" rev-parse --verify refs/heads/staging^{commit})
+100:health_ok() {
+120:verify_public_artifacts() {
+193:    health_ok "$previous_revision" "$schema_before" "$previous_version" || rollback_failed=1
+194:    verify_public_artifacts || rollback_failed=1
+253:  echo "candidate schema transition $schema_before -> $candidate_schema requires TPARUN_ALLOW_SCHEMA_MIGRATION=true" >&2
+267:$SQLITE3 "$DB" ".backup '$rollback/tpahub.db'"
+268:[[ "$($SQLITE3 "$rollback/tpahub.db" 'PRAGMA integrity_check;')" == ok ]]
+269:[[ -z "$($SQLITE3 "$rollback/tpahub.db" 'PRAGMA foreign_key_check;')" ]]
+270:sha256sum "$rollback/tpahub.db" > "$rollback/tpahub.db.sha256"
+279:[[ -r "$rollback/data/tpahub.db" && -r "$rollback/gnupg" ]] || { echo 'rollback state is unreadable' >&2; exit 1; }
+286:  TPARUN_DATA_DIR="$DATA_DIR" "$release/tparun" migrate
+301:health_ok "$commit" "$candidate_schema" "$candidate_version" || deployment_failed 'candidate health validation failed'
+302:verify_public_artifacts || deployment_failed 'public artifact validation failed'
+
+Hosted marker fetched via GET https://tpa.run/version at 2026-10-10.
