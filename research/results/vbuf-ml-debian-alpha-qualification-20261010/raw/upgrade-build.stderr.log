@@ -1,0 +1,164 @@
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded crossbeam-deque v0.8.6
+  Downloaded crossbeam-utils v0.8.21
+  Downloaded crossbeam-epoch v0.9.18
+  Downloaded cpufeatures v0.2.17
+  Downloaded percent-encoding v2.3.2
+  Downloaded prost-derive v0.13.5
+  Downloaded prost v0.13.5
+  Downloaded crypto-common v0.1.7
+  Downloaded simd-adler32 v0.3.10
+  Downloaded either v1.15.0
+  Downloaded sha2 v0.10.9
+  Downloaded cfg-if v1.0.4
+  Downloaded block-buffer v0.10.4
+  Downloaded getrandom v0.2.17
+  Downloaded version_check v0.9.5
+  Downloaded bytes v1.12.1
+  Downloaded generic-array v0.14.7
+  Downloaded adler2 v2.0.1
+  Downloaded untrusted v0.9.0
+  Downloaded crc32fast v1.5.1
+  Downloaded find-msvc-tools v0.1.11
+  Downloaded itoa v1.0.18
+  Downloaded utf8-zero v0.8.1
+  Downloaded zmij v1.0.23
+  Downloaded digest v0.10.7
+  Downloaded proc-macro2 v1.0.107
+  Downloaded serde_derive v1.0.229
+  Downloaded miniz_oxide v0.8.9
+  Downloaded typenum v1.20.1
+  Downloaded cc v1.4.4
+  Downloaded rustls-webpki v0.103.15
+  Downloaded memchr v2.8.3
+  Downloaded syn v2.0.119
+  Downloaded serde_json v1.0.151
+  Downloaded syn v3.0.4
+  Downloaded regex-syntax v0.8.11
+  Downloaded rustls v0.23.43
+  Downloaded webpki-roots v1.0.9
+  Downloaded serde v1.0.229
+  Downloaded flate2 v1.1.9
+  Downloaded aho-corasick v1.1.5
+  Downloaded base64 v0.23.1
+  Downloaded regex v1.13.1
+  Downloaded http v1.5.0
+  Downloaded regex-automata v0.4.18
+  Downloaded itertools v0.14.0
+  Downloaded ureq v3.4.0
+  Downloaded rayon v1.12.0
+  Downloaded httparse v1.10.1
+  Downloaded ureq-proto v0.6.1
+  Downloaded rustls-pki-types v1.15.1
+  Downloaded memmap2 v0.9.10
+  Downloaded anyhow v1.0.104
+  Downloaded libc v0.2.186
+  Downloaded serde_core v1.0.229
+  Downloaded shlex v2.0.1
+  Downloaded log v0.4.34
+  Downloaded once_cell v1.21.4
+  Downloaded zeroize v1.9.0
+  Downloaded quote v1.0.47
+  Downloaded subtle v2.6.1
+  Downloaded rayon-core v1.13.0
+  Downloaded unicode-ident v1.0.24
+  Downloaded ring v0.17.14
+ dpkg-source --before-build .
+ debian/rules clean
+ debian/rules binary
+   Compiling proc-macro2 v1.0.107
+   Compiling libc v0.2.186
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.24
+   Compiling cfg-if v1.0.4
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.11
+   Compiling cc v1.4.4
+   Compiling crossbeam-utils v0.8.21
+   Compiling version_check v0.9.5
+   Compiling generic-array v0.14.7
+   Compiling ring v0.17.14
+   Compiling zeroize v1.9.0
+   Compiling typenum v1.20.1
+   Compiling bytes v1.12.1
+   Compiling anyhow v1.0.104
+   Compiling rustls-pki-types v1.15.1
+   Compiling crossbeam-epoch v0.9.18
+   Compiling getrandom v0.2.17
+   Compiling untrusted v0.9.0
+   Compiling rayon-core v1.13.0
+   Compiling memchr v2.8.3
+   Compiling itoa v1.0.18
+   Compiling httparse v1.10.1
+   Compiling either v1.15.0
+   Compiling crc32fast v1.5.1
+   Compiling serde_core v1.0.229
+   Compiling itertools v0.14.0
+   Compiling crossbeam-deque v0.8.6
+   Compiling syn v2.0.119
+   Compiling rustls v0.23.43
+   Compiling log v0.4.34
+   Compiling adler2 v2.0.1
+   Compiling zmij v1.0.23
+   Compiling simd-adler32 v0.3.10
+   Compiling prost-derive v0.13.5
+   Compiling miniz_oxide v0.8.9
+   Compiling rustls-webpki v0.103.15
+   Compiling http v1.5.0
+   Compiling aho-corasick v1.1.5
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling syn v3.0.4
+   Compiling base64 v0.23.1
+   Compiling regex-syntax v0.8.11
+   Compiling serde_json v1.0.151
+   Compiling subtle v2.6.1
+   Compiling once_cell v1.21.4
+   Compiling serde v1.0.229
+   Compiling regex-automata v0.4.18
+   Compiling rayon v1.12.0
+   Compiling ureq-proto v0.6.1
+   Compiling serde_derive v1.0.229
+   Compiling digest v0.10.7
+   Compiling flate2 v1.1.9
+   Compiling prost v0.13.5
+   Compiling webpki-roots v1.0.9
+   Compiling memmap2 v0.9.10
+   Compiling vbuf-layout v0.1.0 (/tmp/vbuf-ml-debian-build-lfn3ld9j/build-1/vbuf-ml/rust/vbuf-layout)
+   Compiling utf8-zero v0.8.1
+   Compiling cpufeatures v0.2.17
+   Compiling percent-encoding v2.3.2
+   Compiling sha2 v0.10.9
+   Compiling ureq v3.4.0
+   Compiling vbuf-core v0.1.0 (/tmp/vbuf-ml-debian-build-lfn3ld9j/build-1/vbuf-ml/rust)
+   Compiling regex v1.13.1
+   Compiling vbuf-ml v0.1.0 (/tmp/vbuf-ml-debian-build-lfn3ld9j/build-1/vbuf-ml/rust/vbuf-ml)
+    Finished `release` profile [optimized] target(s) in 38.22s
+/tmp/vbuf-ml-debian-build-lfn3ld9j/build-1/vbuf-ml/integrations/ggml/tools/prepare_patched_ggml.py:55: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+  tar.extractall(staged)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    CMAKE_EXPORT_NO_PACKAGE_REGISTRY
+    CMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY
+
+
+jsonschema package unavailable; policy-specific structural validation completed
+In file included from /tmp/vbuf-ml-debian-build-lfn3ld9j/build-1/vbuf-ml/integrations/ggml/tools/vbuf_compat_server.cpp:2:
+/tmp/vbuf-ml-debian-build-lfn3ld9j/build-1/vbuf-ml/integrations/ggml/tools/autoregressive_poc22.cpp:284:26: warning: ‘vbuf_ggml::VbufModelRuntime::Impl’ has a field ‘{anonymous}::Metadata vbuf_ggml::VbufModelRuntime::Impl::metadata’ whose type uses the anonymous namespace [-Wsubobject-linkage]
+  284 | struct VbufModelRuntime::Impl {
+      |                          ^~~~
+/tmp/vbuf-ml-debian-build-lfn3ld9j/build-1/vbuf-ml/integrations/ggml/tools/autoregressive_poc22.cpp:284:26: warning: ‘vbuf_ggml::VbufModelRuntime::Impl’ has a field ‘std::vector<{anonymous}::LayerPlan> vbuf_ggml::VbufModelRuntime::Impl::plans’ whose type has internal linkage [-Wsubobject-linkage]
+dwz: debian/vbuf-ml/usr/lib/vbuf-ml/lib/libvbuf_ml.so: .debug_info section not present
+dwz: Too few files for multifile optimization
+dh_dwz: warning: No dwz multifile created, but not explicitly requested either so ignoring it.
+dh_dwz: warning: Common issues include no debug information at all (missing -g) and
+dh_dwz: warning: compressed debug information (#931891).
+dpkg-shlibdeps: warning: diversions involved - output may be incorrect
+ diversion by libc6 from: /lib64/ld-linux-x86-64.so.2
+dpkg-shlibdeps: warning: diversions involved - output may be incorrect
+ diversion by libc6 to: /lib64/ld-linux-x86-64.so.2.usr-is-merged
+ dpkg-genbuildinfo --build=binary -O../vbuf-ml_0.1.0~alpha.2-1_amd64.buildinfo
+ dpkg-genchanges --build=binary -O../vbuf-ml_0.1.0~alpha.2-1_amd64.changes
+ dpkg-source --after-build .

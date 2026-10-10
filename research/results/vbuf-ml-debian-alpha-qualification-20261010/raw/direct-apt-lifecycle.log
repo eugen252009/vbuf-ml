@@ -1,0 +1,241 @@
+Hit:1 http://deb.debian.org/debian trixie InRelease
+Hit:2 http://deb.debian.org/debian trixie-updates InRelease
+Hit:3 http://deb.debian.org/debian-security trixie-security InRelease
+Get:4 http://deb.debian.org/debian trixie/main amd64 Components [5175 kB]
+Fetched 5175 kB in 1s (5494 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following NEW packages will be installed:
+  vbuf-ml
+0 upgraded, 1 newly installed, 0 to remove and 1 not upgraded.
+Need to get 0 B/1609 kB of archives.
+After this operation, 5237 kB of additional disk space will be used.
+Get:1 /out/packages/vbuf-ml_0.1.0~alpha-1_amd64.deb vbuf-ml amd64 0.1.0~alpha-1 [1609 kB]
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Teletype
+debconf: unable to initialize frontend: Teletype
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Noninteractive
+Selecting previously unselected package vbuf-ml.
+(Reading database ...
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 28619 files and directories currently installed.)
+Preparing to unpack .../vbuf-ml_0.1.0~alpha-1_amd64.deb ...
+Unpacking vbuf-ml (0.1.0~alpha-1) ...
+Setting up vbuf-ml (0.1.0~alpha-1) ...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+0 upgraded, 0 newly installed, 1 reinstalled, 0 to remove and 1 not upgraded.
+Need to get 0 B/1609 kB of archives.
+After this operation, 0 B of additional disk space will be used.
+Get:1 /out/packages/vbuf-ml_0.1.0~alpha-1_amd64.deb vbuf-ml amd64 0.1.0~alpha-1 [1609 kB]
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Teletype
+debconf: unable to initialize frontend: Teletype
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Noninteractive
+(Reading database ...
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 28630 files and directories currently installed.)
+Preparing to unpack .../vbuf-ml_0.1.0~alpha-1_amd64.deb ...
+Unpacking vbuf-ml (0.1.0~alpha-1) over (0.1.0~alpha-1) ...
+Setting up vbuf-ml (0.1.0~alpha-1) ...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following packages will be upgraded:
+  vbuf-ml
+1 upgraded, 0 newly installed, 0 to remove and 1 not upgraded.
+Need to get 0 B/1610 kB of archives.
+After this operation, 5120 B of additional disk space will be used.
+Get:1 /out/packages/vbuf-ml_0.1.0~alpha.2-1_amd64.deb vbuf-ml amd64 0.1.0~alpha.2-1 [1610 kB]
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Teletype
+debconf: unable to initialize frontend: Teletype
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Noninteractive
+(Reading database ...
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 28630 files and directories currently installed.)
+Preparing to unpack .../vbuf-ml_0.1.0~alpha.2-1_amd64.deb ...
+Unpacking vbuf-ml (0.1.0~alpha.2-1) over (0.1.0~alpha-1) ...
+Setting up vbuf-ml (0.1.0~alpha.2-1) ...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following packages will be REMOVED:
+  vbuf-ml
+0 upgraded, 0 newly installed, 1 to remove and 1 not upgraded.
+After this operation, 5242 kB disk space will be freed.
+(Reading database ...
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 28630 files and directories currently installed.)
+Removing vbuf-ml (0.1.0~alpha.2-1) ...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following NEW packages will be installed:
+  vbuf-ml
+0 upgraded, 1 newly installed, 0 to remove and 1 not upgraded.
+Need to get 0 B/1610 kB of archives.
+After this operation, 5242 kB of additional disk space will be used.
+Get:1 /out/packages/vbuf-ml_0.1.0~alpha.2-1_amd64.deb vbuf-ml amd64 0.1.0~alpha.2-1 [1610 kB]
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Teletype
+debconf: unable to initialize frontend: Teletype
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Noninteractive
+Selecting previously unselected package vbuf-ml.
+(Reading database ...
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 28619 files and directories currently installed.)
+Preparing to unpack .../vbuf-ml_0.1.0~alpha.2-1_amd64.deb ...
+Unpacking vbuf-ml (0.1.0~alpha.2-1) ...
+Setting up vbuf-ml (0.1.0~alpha.2-1) ...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following packages will be REMOVED:
+  vbuf-ml*
+0 upgraded, 0 newly installed, 1 to remove and 1 not upgraded.
+After this operation, 5242 kB disk space will be freed.
+(Reading database ...
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 28630 files and directories currently installed.)
+Removing vbuf-ml (0.1.0~alpha.2-1) ...
+DEBIAN_PACKAGE_LIFECYCLE_SMOKE=PASS
+old=0.1.0~alpha-1
+new=0.1.0~alpha.2-1

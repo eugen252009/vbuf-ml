@@ -127,14 +127,18 @@ and [concurrency limits](research/results/vbuf-ml-integration/step31z-shared-res
 
 ## Debian Alpha Package
 
-A narrow CPU-only Debian `amd64` Alpha package is being prepared for the
-existing `vbuf_compat_server` and its private Rust vBuf-ML consumer library.
-It does not include models, install a service, or qualify model inference,
-Qwen3-8B as a coding agent, CUDA, or Native AV. The package-to-suite mapping,
-reproducible build instructions, installation limitations, and current TPA.run
-multi-suite blocker are documented in the
-[Debian Alpha packaging guide](docs/vbuf-ml/debian-alpha.md). No hosted APT
-repository or signing key is configured by this repository.
+A CPU-only Debian 13 `amd64` Alpha candidate for the existing
+`vbuf_compat_server` and its private Rust vBuf-ML consumer library passed a
+byte-identical two-build check and Debian package install/upgrade/remove/purge
+smoke tests. A disposable, locally signed TPA APT tree also passed repository
+verification and package install/upgrade checks. The package contains no model,
+installs no service, and does not qualify model inference, Qwen3-8B as a coding
+agent, CUDA, or Native AV. The artifact was not published. See the
+[Debian Alpha packaging guide](docs/vbuf-ml/debian-alpha.md) and [local
+qualification report](research/results/vbuf-ml-debian-alpha-qualification-20261010.md)
+for scope, reproducible-build instructions, artifact hashes, and the current
+TPA.run multi-suite blocker. No hosted APT repository or signing key is
+configured by this repository.
 
 ## Limits And Historical Evidence
 

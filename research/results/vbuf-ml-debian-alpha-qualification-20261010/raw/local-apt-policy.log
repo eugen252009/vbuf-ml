@@ -1,0 +1,8 @@
+vbuf-ml:
+  Installed: (none)
+  Candidate: 0.1.0~alpha.2-1
+  Version table:
+     0.1.0~alpha.2-1 500
+        500 file:/out/local-apt alpha/main amd64 Packages
+     0.1.0~alpha-1 500
+        500 file:/out/local-apt alpha/main amd64 Packages

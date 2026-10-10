@@ -1,0 +1,5 @@
+running with root privileges is not recommended!
+W: vbuf-ml: initial-upload-closes-no-bugs [usr/share/doc/vbuf-ml/changelog.Debian.gz:1]
+W: vbuf-ml: initial-upload-closes-no-bugs [usr/share/doc/vbuf-ml/changelog.Debian.gz:1]
+W: vbuf-ml: no-manual-page [usr/bin/vbuf_compat_server]
+W: vbuf-ml: no-manual-page [usr/bin/vbuf_compat_server]

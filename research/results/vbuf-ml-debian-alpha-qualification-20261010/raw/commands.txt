@@ -1,0 +1,28 @@
+The builder was run in the pinned Debian 13 image above with Rust 1.95.0 installed using rustup, PATH preferring $HOME/.cargo/bin, and VBUF_BUILD_IMAGE set to the image digest.
+
+Reproducibility check from the clean candidate source snapshot:
+  python3 packaging/debian/build.py build --candidate-tag alpha-0.1.0 --output /out/packages --check-reproducibility
+
+Second version for package upgrade checks:
+  python3 packaging/debian/build.py build --candidate-tag alpha-0.1.0.2 --output /out/packages
+
+Direct package lifecycle:
+  scripts/tests/debian-package-lifecycle-smoke.sh \
+    /out/packages/vbuf-ml_0.1.0~alpha-1_amd64.deb \
+    /out/packages/vbuf-ml_0.1.0~alpha.2-1_amd64.deb
+
+Lintian:
+  lintian --fail-on error /out/packages/vbuf-ml_*.deb
+
+Local TPA repository (fresh output path; temporary local-only GPG key):
+  tpa pack -in=/out/packages -out=/out/local-apt \
+    -origin=vbuf-ml-local \
+    -label='vBuf-ML local Alpha package qualification' \
+    -suite=alpha -codename=alpha -components=main -gpg=<temporary fingerprint>
+  tpa verify --json -codename=alpha -keyring=<exported public key> \
+    -fingerprint=<temporary fingerprint> -require-signed /out/local-apt
+
+The local APT source used Types: deb, URI file:/out/local-apt, suite alpha,
+component main, architecture amd64, and Signed-By pointing to the exported
+public key. APT installed 0.1.0~alpha-1 and upgraded it to 0.1.0~alpha.2-1.
+The generated private key and local repository were not committed or published.

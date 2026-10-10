@@ -1,0 +1,16 @@
+Qualification date: 2026-10-10
+Repository: https://github.com/eugen252009/vbuf-ml
+Package source commit: 2c8dc80288f3fcfbb53ce905d62cdc0ae1c38f3c
+Package source tree: 7ecfbab7d5eac762ba4143efda4e2d5730d371ea
+Builder image: Debian 13 (Trixie), amd64, debian@sha256:a99cfc517144bc59b1978475ec53b46ecabec7e43635402ee5b77cc54cd1b20a
+C/C++ compiler: Debian GCC 14.2.0-19
+CMake: 3.31.6
+Debhelper: 13.24.2
+DPKG tools: 1.22.22
+Rust: rustc 1.95.0 (59807616e 2026-04-14); cargo 1.95.0 (f2d3ce0bd 2026-03-21); rustup 1.29.1
+GGML: 2d191b5dee1a591c41ee8a653ce42bfcd9c8716d
+GGML patch SHA-256: 6fe680adb0e659ef0f7f5bdc7eaa1efa64c879380026e74c45327e694e477813
+Cargo.lock SHA-256: f634102e3a90bc939db2a707a943d65c2ce7b6c3c955b2a65bad4d33b268cc00
+TPA standalone source commit: ddcdf2ec9f7e15d985393b20ca8b493e358b5775
+TPA standalone binary SHA-256: ab6ca5ca05d4cf70f89dd7d80bcdf5a065d5d3b4306c45550d43ed9aabf59219
+Inspected TPA.run source commit: b615d7e0309e629784f52a718b26b578abb6c300

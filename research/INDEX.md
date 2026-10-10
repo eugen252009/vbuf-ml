@@ -13,6 +13,8 @@ The original research documents and their Git history are preserved for reproduc
 ### 2026
 
 - **2026-10-10** — [Capture commands and build provenance](results/vbuf-ml-integration/pi-agent-qwen3-8b-second-turn-replay/raw/fixed-prefix-logit-diagnosis-20261010/harness/commands.md)
+- **2026-10-10** — [Debian Alpha package: local build and lifecycle qualification](results/vbuf-ml-debian-alpha-qualification-20261010.md)
+  - Summary: First reproducible Debian 13 Alpha package passed local build, package, TPA signature, and APT lifecycle checks; hosted publication remains blocked.
 - **2026-10-10** — [Experimental Qwen3-8B Pi coding-agent A/B qualification](results/vbuf-ml-integration/pi-agent-qwen3-8b-ab-comparison/qualification.md)
 - **2026-10-10** — [Fixed-prefix logit diagnosis evidence](results/vbuf-ml-integration/pi-agent-qwen3-8b-second-turn-replay/raw/fixed-prefix-logit-diagnosis-20261010/README.md)
 - **2026-10-10** — [Offline native-AV evidence audit artifacts](results/vbuf-ml-integration/qwen3-numerical-propagation/raw/offline-capture-audit-20261010/README.md)

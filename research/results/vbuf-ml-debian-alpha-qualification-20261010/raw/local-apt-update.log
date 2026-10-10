@@ -1,0 +1,7 @@
+Get:1 file:/out/local-apt alpha InRelease [955 B]
+Get:1 file:/out/local-apt alpha InRelease [955 B]
+Get:2 file:/out/local-apt alpha/main amd64 Packages [686 B]
+Hit:3 http://deb.debian.org/debian trixie InRelease
+Hit:4 http://deb.debian.org/debian trixie-updates InRelease
+Hit:5 http://deb.debian.org/debian-security trixie-security InRelease
+Reading package lists...

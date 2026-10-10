@@ -1,0 +1,10 @@
+test_build_inputs_are_explicit_and_exclude_research_payloads (test_debian_package_versions.DebianVersionMappingTests.test_build_inputs_are_explicit_and_exclude_research_payloads) ... ok
+test_canonical_tag_mappings (test_debian_package_versions.DebianVersionMappingTests.test_canonical_tag_mappings) ... ok
+test_debian_versions_order_by_channel_and_revision (test_debian_package_versions.DebianVersionMappingTests.test_debian_versions_order_by_channel_and_revision) ... ok
+test_noncanonical_and_unrelated_tags_are_not_release_aliases (test_debian_package_versions.DebianVersionMappingTests.test_noncanonical_and_unrelated_tags_are_not_release_aliases) ... ok
+test_only_managed_prefixes_are_strictly_parsed (test_debian_package_versions.DebianVersionMappingTests.test_only_managed_prefixes_are_strictly_parsed) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.005s
+
+OK

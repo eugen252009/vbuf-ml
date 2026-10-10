@@ -1,0 +1,9 @@
+Build and harness iterations (all were local, no package publication or Git tag creation):
+
+1. Initial builder preflight called `dh --version`. On Debian 13, `dh` treats `--version` as an invalid sequence and exited 25. The preflight now reads the installed debhelper package version via dpkg-query.
+2. The first Rust/CMake build passed Cargo but `dh_auto_build -- --target=vbuf_compat_server` forwarded the CMake-specific option to GNU make, which rejected it. The Debian override now passes the target name as a make target.
+3. Package verification found that dh_install interpreted a full filename as a destination directory; the launcher was therefore not at /usr/bin/vbuf_compat_server. The launcher source was renamed to match its installed basename and dh_install now targets usr/bin/.
+4. One intermediate container invocation omitted $HOME/.cargo/bin from PATH and correctly failed the pinned Rust version check before building. Subsequent invocations used the pinned Rustup toolchain first in PATH.
+5. One local APT shell wrapper initially expanded dpkg-query's ${Version} format in the outer shell. The corrected invocation preserved the format string; the package was then installed and upgraded successfully from the signed local repository.
+
+The final two-build reproducibility result, package checks, direct APT lifecycle, signed TPA verification, and signed local APT lifecycle are recorded separately. These harness failures did not alter runtime code or inference behavior.
