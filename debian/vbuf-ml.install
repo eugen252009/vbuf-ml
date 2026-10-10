@@ -1,4 +1,4 @@
 debian/build/vbuf_compat_server usr/lib/vbuf-ml/
 debian/rust-target/release/libvbuf_ml.so usr/lib/vbuf-ml/lib/
-debian/vbuf-ml-launcher usr/bin/vbuf_compat_server
+debian/vbuf_compat_server usr/bin/
 debian/vbuf-ml-build-provenance.json usr/share/vbuf-ml/
