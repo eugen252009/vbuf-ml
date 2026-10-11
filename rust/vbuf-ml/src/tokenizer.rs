@@ -13,7 +13,7 @@ pub const MAX_MERGES: u64 = 10_000_000;
 pub const MAX_CHAT_TEMPLATE_BYTES: u64 = 1024 * 1024;
 const HEADER_BYTES: usize = 20;
 const ENTRY_BYTES: usize = 12;
-const ROLE_SLOTS: usize = 18;
+const ROLE_SLOTS: usize = 19;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
@@ -57,6 +57,7 @@ pub enum TokenizerRole {
     TokenFlags = 15,
     SpecialTokenIds = 16,
     IgnoreMerges = 17,
+    NormalizerIdentity = 18,
 }
 
 impl TokenizerRole {
@@ -79,6 +80,7 @@ impl TokenizerRole {
             15 => Some(Self::TokenFlags),
             16 => Some(Self::SpecialTokenIds),
             17 => Some(Self::IgnoreMerges),
+            18 => Some(Self::NormalizerIdentity),
             _ => None,
         }
     }
@@ -150,6 +152,7 @@ pub enum PreTokenizer {
     Qwen2 = 1,
     DeepSeek = 2,
     Gpt2ByteLevel = 3,
+    Qwen3_5 = 4,
 }
 
 impl PreTokenizer {
@@ -158,9 +161,28 @@ impl PreTokenizer {
             1 => Ok(Self::Qwen2),
             2 => Ok(Self::DeepSeek),
             3 => Ok(Self::Gpt2ByteLevel),
+            4 => Ok(Self::Qwen3_5),
             _ => Err(MlError::new(
                 MlErrorCode::InvalidTokenizerIdentity,
                 "unsupported pre-tokenizer identity",
+            )),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u64)]
+pub enum TokenizerNormalizer {
+    UnicodeNfc = 1,
+}
+
+impl TokenizerNormalizer {
+    fn from_value(value: u64) -> Result<Self, MlError> {
+        match value {
+            1 => Ok(Self::UnicodeNfc),
+            _ => Err(MlError::new(
+                MlErrorCode::InvalidTokenizerIdentity,
+                "unsupported tokenizer normalizer identity",
             )),
         }
     }
@@ -178,6 +200,7 @@ pub struct TokenizerMetadata<'a> {
     merge_right_ids: Option<CheckedRange<'a>>,
     model: Option<TokenizerModel>,
     pre_tokenizer: Option<PreTokenizer>,
+    normalizer: Option<TokenizerNormalizer>,
     add_bos: Option<bool>,
     ignore_merges: Option<bool>,
     chat_template: Option<CheckedRange<'a>>,
@@ -357,6 +380,24 @@ impl<'a> TokenizerMetadata<'a> {
         } else {
             None
         };
+        let normalizer = resolved[TokenizerRole::NormalizerIdentity as usize]
+            .take()
+            .map(|(index, range)| {
+                TokenizerNormalizer::from_value(decode_unsigned_scalar(
+                    &validated.blocks()[index],
+                    range.bytes(),
+                )?)
+            })
+            .transpose()?;
+        let is_qwen35 = pre_tokenizer == Some(PreTokenizer::Qwen3_5);
+        if is_qwen35 != (normalizer == Some(TokenizerNormalizer::UnicodeNfc))
+            || (is_qwen35 && kind != TokenizerKind::Gpt2BpeQwen2)
+        {
+            return Err(MlError::new(
+                MlErrorCode::InvalidTokenizerIdentity,
+                "Qwen3.5 requires the GPT-2 BPE kind and pinned Unicode NFC normalizer",
+            ));
+        }
         let add_bos = if matches!(
             kind,
             TokenizerKind::Gpt2BpeQwen2 | TokenizerKind::Gpt2BpeByteLevel
@@ -423,6 +464,7 @@ impl<'a> TokenizerMetadata<'a> {
             merge_right_ids,
             model,
             pre_tokenizer,
+            normalizer,
             add_bos,
             ignore_merges,
             chat_template,
@@ -467,6 +509,9 @@ impl<'a> TokenizerMetadata<'a> {
     }
     pub fn pre_tokenizer(&self) -> Option<PreTokenizer> {
         self.pre_tokenizer
+    }
+    pub fn normalizer(&self) -> Option<TokenizerNormalizer> {
+        self.normalizer
     }
     pub fn add_bos(&self) -> Option<bool> {
         self.add_bos

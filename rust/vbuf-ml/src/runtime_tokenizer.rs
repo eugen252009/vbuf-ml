@@ -4,9 +4,12 @@
 //! borrow token bytes from `TokenizerMetadata` and own only lookup-table
 //! structure. The backing mapping must outlive the indexes.
 
-use crate::{MlError, MlErrorCode, PreTokenizer, TokenizerKind, TokenizerMetadata};
+use crate::{
+    MlError, MlErrorCode, PreTokenizer, TokenizerKind, TokenizerMetadata, TokenizerNormalizer,
+};
 use regex::Regex;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use unicode_normalization::UnicodeNormalization;
 
 #[derive(Debug)]
 pub struct TokenIndex<'a> {
@@ -133,14 +136,30 @@ pub struct Gpt2ByteLevelTokenizer<'a> {
     metadata: &'a TokenizerMetadata<'a>,
     indexes: RuntimeTokenizerIndexes<'a>,
     pretokenizer: Regex,
+    added_tokens: Vec<(u32, &'a str)>,
+    literal_token_ids: HashSet<u32>,
+    normalizer: Option<TokenizerNormalizer>,
+    qwen35_pretokenizer: bool,
 }
 
 impl<'a> Gpt2ByteLevelTokenizer<'a> {
     pub fn build(metadata: &'a TokenizerMetadata<'a>) -> Result<Self, MlError> {
         let supported_profile = matches!(
-            (metadata.kind, metadata.pre_tokenizer()),
-            (TokenizerKind::Gpt2BpeByteLevel, Some(PreTokenizer::Gpt2ByteLevel))
-                | (TokenizerKind::Gpt2BpeQwen2, Some(PreTokenizer::Qwen2))
+            (
+                metadata.kind,
+                metadata.pre_tokenizer(),
+                metadata.normalizer()
+            ),
+            (
+                TokenizerKind::Gpt2BpeByteLevel,
+                Some(PreTokenizer::Gpt2ByteLevel),
+                None
+            ) | (TokenizerKind::Gpt2BpeQwen2, Some(PreTokenizer::Qwen2), None)
+                | (
+                    TokenizerKind::Gpt2BpeQwen2,
+                    Some(PreTokenizer::Qwen3_5),
+                    Some(TokenizerNormalizer::UnicodeNfc)
+                )
         );
         if !supported_profile || metadata.model().is_none() {
             return Err(MlError::new(
@@ -148,78 +167,126 @@ impl<'a> Gpt2ByteLevelTokenizer<'a> {
                 "tokenizer is not the persistent GPT-2 byte-level profile",
             ));
         }
-        let pretokenizer = Regex::new(
-            r"(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\r\n\p{L}\p{N}]?\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]+[\r\n]*|\s*[\r\n]+|\s+",
-        )
-        .map_err(|_| MlError::new(MlErrorCode::InvalidTokenizerIdentity, "GPT-2 regex is invalid"))?;
+        let pattern = match metadata.pre_tokenizer() {
+            Some(PreTokenizer::Qwen3_5) => {
+                r"(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\r\n\p{L}\p{N}]?[\p{L}\p{M}]+|\p{N}| ?[^\s\p{L}\p{M}\p{N}]+[\r\n]*|\s*[\r\n]+"
+            }
+            Some(PreTokenizer::Qwen2 | PreTokenizer::Gpt2ByteLevel) => {
+                r"(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\r\n\p{L}\p{N}]?\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]+[\r\n]*|\s*[\r\n]+|\s+"
+            }
+            _ => unreachable!("unsupported pre-tokenizer was rejected above"),
+        };
+        let pretokenizer = Regex::new(pattern).map_err(|_| {
+            MlError::new(
+                MlErrorCode::InvalidTokenizerIdentity,
+                "GPT-2 regex is invalid",
+            )
+        })?;
+        let qwen35_pretokenizer = metadata.pre_tokenizer() == Some(PreTokenizer::Qwen3_5);
+        let special_ids: HashSet<u32> = metadata
+            .special_ids()
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(|id| u32::try_from(id).ok())
+            .collect();
+        let mut added_tokens = Vec::new();
+        let mut literal_token_ids = HashSet::new();
+        for index in 0..metadata.token_count() {
+            let id = u32::try_from(index).map_err(|_| {
+                MlError::new(
+                    MlErrorCode::TokenizerArrayLengthMismatch,
+                    "token ID exceeds runtime index width",
+                )
+            })?;
+            let is_added = qwen35_pretokenizer
+                && metadata
+                    .token_flags(index)
+                    .is_some_and(|flags| flags & 1 != 0);
+            if (is_added || special_ids.contains(&id))
+                && let Some(text) = metadata.token_text(index).filter(|text| !text.is_empty())
+            {
+                added_tokens.push((id, text));
+                literal_token_ids.insert(id);
+            }
+        }
+        added_tokens.sort_by_key(|entry| std::cmp::Reverse(entry.1.len()));
         Ok(Self {
             metadata,
             indexes: RuntimeTokenizerIndexes::build(metadata)?,
             pretokenizer,
+            added_tokens,
+            literal_token_ids,
+            normalizer: metadata.normalizer(),
+            qwen35_pretokenizer,
         })
     }
 
     pub fn encode(&self, text: &str) -> Result<Vec<u32>, MlError> {
         let mut output = Vec::new();
         let mut cursor = 0usize;
-        while cursor < text.len() {
-            if let Some((id, length)) = self.special_at(text, cursor) {
-                output.push(id);
-                cursor += length;
-                continue;
+        if self.qwen35_pretokenizer {
+            while cursor < text.len() {
+                if let Some((id, length)) = self.added_token_at(text, cursor) {
+                    output.push(id);
+                    cursor += length;
+                    continue;
+                }
+                let end = self
+                    .next_added_token_start(text, cursor)
+                    .unwrap_or(text.len());
+                let plain = &text[cursor..end];
+                let normalized = match self.normalizer {
+                    Some(TokenizerNormalizer::UnicodeNfc) => plain.nfc().collect::<String>(),
+                    None => plain.to_owned(),
+                };
+                self.encode_ordinary(&normalized, &mut output)?;
+                cursor = end;
             }
-            let piece = self.pretokenizer.find_at(text, cursor).ok_or_else(|| {
-                MlError::new(
-                    MlErrorCode::InvalidTokenText,
-                    "GPT-2 pre-tokenization made no progress",
-                )
-            })?;
-            if piece.start() != cursor {
-                return Err(MlError::new(
-                    MlErrorCode::InvalidTokenText,
-                    "GPT-2 pre-tokenizer left an uncovered input span",
-                ));
-            }
-            let mut symbols = Vec::new();
-            for byte in piece.as_str().as_bytes() {
-                let symbol = byte_to_unicode(*byte);
-                let mut symbol_bytes = [0u8; 4];
-                let symbol_bytes = symbol.encode_utf8(&mut symbol_bytes).as_bytes();
-                let id = self.indexes.token.lookup(symbol_bytes).ok_or_else(|| {
-                    MlError::new(MlErrorCode::InvalidTokenText, "byte token is absent")
+        } else {
+            while cursor < text.len() {
+                if let Some((id, length)) = self.added_token_at(text, cursor) {
+                    output.push(id);
+                    cursor += length;
+                    continue;
+                }
+                let piece = self.pretokenizer.find_at(text, cursor).ok_or_else(|| {
+                    MlError::new(
+                        MlErrorCode::InvalidTokenText,
+                        "GPT-2 pre-tokenization made no progress",
+                    )
                 })?;
-                symbols.push(id);
+                if piece.start() != cursor {
+                    return Err(MlError::new(
+                        MlErrorCode::InvalidTokenText,
+                        "GPT-2 pre-tokenizer left an uncovered input span",
+                    ));
+                }
+                self.encode_piece(piece.as_str(), &mut output)?;
+                cursor = piece.end();
             }
-            if !self.metadata.ignore_merges().unwrap_or(false) {
-                symbols = self.merge_symbols(symbols)?;
-            }
-            output.extend(symbols);
-            cursor = piece.end();
         }
-        if self.metadata.add_bos() == Some(true) {
-            if let Some((_, bos)) = self
+        if self.metadata.add_bos() == Some(true)
+            && let Some((_, bos)) = self
                 .metadata
                 .specials()
                 .iter()
                 .find(|(kind, _)| matches!(kind, crate::SpecialToken::Bos))
-            {
-                output.insert(
-                    0,
-                    u32::try_from(*bos).map_err(|_| {
-                        MlError::new(
-                            MlErrorCode::InvalidSpecialTokenId,
-                            "BOS ID exceeds runtime width",
-                        )
-                    })?,
-                );
-            }
+        {
+            output.insert(
+                0,
+                u32::try_from(*bos).map_err(|_| {
+                    MlError::new(
+                        MlErrorCode::InvalidSpecialTokenId,
+                        "BOS ID exceeds runtime width",
+                    )
+                })?,
+            );
         }
         Ok(output)
     }
 
     pub fn decode_bytes(&self, tokens: &[u32]) -> Result<Vec<u8>, MlError> {
         let mut bytes = Vec::new();
-        let special_ids = self.metadata.special_ids().unwrap_or_default();
         for token in tokens {
             let index = u64::from(*token);
             let text = self.metadata.token_text(index).ok_or_else(|| {
@@ -228,7 +295,7 @@ impl<'a> Gpt2ByteLevelTokenizer<'a> {
                     "token ID is outside vocabulary",
                 )
             })?;
-            if special_ids.contains(&index) {
+            if self.literal_token_ids.contains(token) {
                 bytes.extend_from_slice(text.as_bytes());
             } else {
                 for character in text.chars() {
@@ -249,17 +316,84 @@ impl<'a> Gpt2ByteLevelTokenizer<'a> {
             .map_err(|_| MlError::new(MlErrorCode::InvalidTokenText, "decoded bytes are not UTF-8"))
     }
 
-    fn special_at(&self, text: &str, cursor: usize) -> Option<(u32, usize)> {
-        self.metadata
-            .special_ids()?
-            .into_iter()
-            .filter_map(|id| {
-                let token = self.metadata.token_text(id)?;
-                text.get(cursor..)
-                    .filter(|rest| rest.starts_with(token))
-                    .and_then(|_| u32::try_from(id).ok().map(|id| (id, token.len())))
-            })
-            .max_by_key(|(_, length)| *length)
+    fn added_token_at(&self, text: &str, cursor: usize) -> Option<(u32, usize)> {
+        let remaining = text.get(cursor..)?;
+        self.added_tokens
+            .iter()
+            .find(|(_, token)| remaining.starts_with(token))
+            .map(|(id, token)| (*id, token.len()))
+    }
+
+    fn next_added_token_start(&self, text: &str, cursor: usize) -> Option<usize> {
+        let remaining = text.get(cursor..)?;
+        self.added_tokens
+            .iter()
+            .filter_map(|(_, token)| remaining.find(token).map(|offset| cursor + offset))
+            .min()
+    }
+
+    fn encode_ordinary(&self, text: &str, output: &mut Vec<u32>) -> Result<(), MlError> {
+        let mut cursor = 0usize;
+        while cursor < text.len() {
+            let piece = self.pretokenizer.find_at(text, cursor);
+            let piece_end = match piece {
+                Some(piece) if piece.start() == cursor => piece.end(),
+                _ if self.qwen35_pretokenizer
+                    && text[cursor..]
+                        .chars()
+                        .next()
+                        .is_some_and(char::is_whitespace) =>
+                {
+                    self.qwen35_whitespace_end(text, cursor)
+                }
+                _ => {
+                    return Err(MlError::new(
+                        MlErrorCode::InvalidTokenText,
+                        "GPT-2 pre-tokenizer left an uncovered input span",
+                    ));
+                }
+            };
+            self.encode_piece(&text[cursor..piece_end], output)?;
+            cursor = piece_end;
+        }
+        Ok(())
+    }
+
+    fn encode_piece(&self, piece: &str, output: &mut Vec<u32>) -> Result<(), MlError> {
+        let mut symbols = Vec::new();
+        for byte in piece.as_bytes() {
+            let symbol = byte_to_unicode(*byte);
+            let mut symbol_bytes = [0u8; 4];
+            let symbol_bytes = symbol.encode_utf8(&mut symbol_bytes).as_bytes();
+            let id = self.indexes.token.lookup(symbol_bytes).ok_or_else(|| {
+                MlError::new(MlErrorCode::InvalidTokenText, "byte token is absent")
+            })?;
+            symbols.push(id);
+        }
+        if !self.metadata.ignore_merges().unwrap_or(false) {
+            symbols = self.merge_symbols(symbols)?;
+        }
+        output.extend(symbols);
+        Ok(())
+    }
+
+    fn qwen35_whitespace_end(&self, text: &str, start: usize) -> usize {
+        let mut end = start;
+        let mut last_char_start = start;
+        let mut count = 0usize;
+        for (offset, character) in text[start..].char_indices() {
+            if !character.is_whitespace() {
+                break;
+            }
+            last_char_start = start + offset;
+            end = start + offset + character.len_utf8();
+            count += 1;
+        }
+        if end < text.len() && count > 1 {
+            last_char_start
+        } else {
+            end
+        }
     }
 
     fn merge_symbols(&self, mut symbols: Vec<u32>) -> Result<Vec<u32>, MlError> {

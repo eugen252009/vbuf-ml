@@ -92,7 +92,7 @@ pub use source::{
 pub use tensor_directory::{TensorDescriptor, TensorDirectory, TensorEntry};
 pub use tokenizer::{
     PreTokenizer, SpecialToken, TokenizerEntry, TokenizerKind, TokenizerMetadata, TokenizerModel,
-    TokenizerRole,
+    TokenizerNormalizer, TokenizerRole,
 };
 
 /// Boundary smoke helper for future profile code. It does not parse or
