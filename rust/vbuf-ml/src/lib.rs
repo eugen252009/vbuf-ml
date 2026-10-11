@@ -19,6 +19,7 @@ pub mod metadata;
 pub mod moe;
 pub mod nested;
 pub mod quantization;
+pub mod qwen35_text;
 pub mod qwen_moe;
 pub mod range_loading;
 pub mod region_roles;
@@ -57,6 +58,10 @@ pub use quantization::{
     encode_payload as encode_quantization_payload,
 };
 pub use qwen_moe::QwenMoELoader;
+pub use qwen35_text::{
+    QWEN35_9B_CONTEXT_TOKENS, Qwen35LayerKind, Qwen35PlanError, Qwen35StateMemoryEstimate,
+    Qwen35TextProfile,
+};
 pub use range_loading::{
     Coalescing, LoadedPlan, LoadedRead, MmapSource, PhysicalRange, PlannedTarget,
     PositionedFileSource, RangeLoadError, RangeSource, ReadPlan, SelectedTensor, SourceResolver,

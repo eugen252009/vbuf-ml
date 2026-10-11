@@ -1,0 +1,197 @@
+---
+date: 2026-10-11
+summary: Pins the Qwen3.5-9B metadata and records source-level context/state planning while leaving inference and Pi-Agent gates blocked.
+---
+
+# Qwen3.5-9B 262K vBuf-ML Runtime Readiness
+
+## Status
+
+**BLOCKED — source-level profile/planning work only; no Qwen3.5 inference or Pi-Agent runtime is qualified.**
+
+The selected checkpoint's metadata is pinned, and `rust/vbuf-ml` now has an
+experimental, model-specific HF-config profile parser plus checked context,
+prefill-range, and persistent-state size planners. This does not load or
+convert weights, execute DeltaNet or full attention, establish tokenizer
+parity, or make the existing server admit Qwen3.5. The profile is deliberately
+not connected to the production Qwen3 loader or server.
+
+No Qwen3.5 weights were found locally. The 19.3 GB BF16 checkpoint was not
+downloaded. Consequently the request's context-capacity, numerical,
+semantic, optimizer-fallback, and real Pi tool-use gates remain **NOT RUN**.
+
+## Pinned upstream identity
+
+Read-only Hugging Face metadata inspection selected:
+
+- Repository: `Qwen/Qwen3.5-9B`
+- Revision: `c202236235762e1c871ad0ccb60c8ee5ba337b9a`
+- License metadata: Apache-2.0
+- Architecture: `Qwen3_5ForConditionalGeneration`, with a text stack and a
+  vision tower in the same checkpoint
+- Exact upstream `config.json` fixture:
+  [`rust/vbuf-ml/tests/fixtures/qwen35-9b-config.json`](../../../rust/vbuf-ml/tests/fixtures/qwen35-9b-config.json)
+- `config.json` SHA-256:
+  `d0883072e01861ed0b2d47be3c16c36a8e81c224c7ffaa310c6558fb3f932b05`
+
+The unit test verifies the fixture hash before parsing it. The parser rejects
+configs whose architecture, layer schedule, dimensions, dtypes, gated-attention
+semantics, MTP count, or RoPE/MRoPE parameters differ from this profile.
+
+### Text architecture from the pinned config
+
+- 262,144 configured maximum positions; 32 main decoder layers
+- 24 linear-attention/Gated-DeltaNet layers and 8 full-attention layers
+- Layer order: three linear-attention layers, then one full-attention layer,
+  repeated eight times
+- Hidden size 4,096; 16 full-attention query heads; 4 KV heads; head dimension
+  256; intermediate size 12,288
+- Linear-attention dimensions: 16 key heads × 128, 32 value heads × 128,
+  convolution kernel 4; recurrent state dtype `float32`
+- BF16 text weights; full attention uses gated output and MRoPE
+  (`theta=10,000,000`, partial rotary factor 0.25, sections `[11,11,10]`)
+- One MTP layer is present in the config/checkpoint, beyond the 32-layer main
+  stack. The planner does not execute MTP.
+- A 27-layer vision tower is also present. This profile parses text dimensions
+  only; it does not support image or video inputs.
+
+### Tokenizer and checkpoint files
+
+The pinned metadata files were fetched/hashed without fetching weights:
+
+| File | SHA-256 / identity | Notes |
+|---|---|---|
+| `tokenizer_config.json` | `316230d6a809701f4db5ea8f8fc862bc3a6f3229c937c174e674ff3ca0a64ac8` | Includes the Qwen3.5 chat template |
+| `tokenizer.json` | `5f9e4d4901a92b997e463c1f46055088b6cca5ca61a6522d1b9f64c4bb81cb42` | Matches the Hub LFS SHA-256 |
+| `vocab.json` | `ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003` | Stream-hashed at the pinned revision |
+| `merges.txt` | `a9d356d7bdf1ef4949e3e748e95b8e10ad9d4e2e838eddc38a0a7b6b94d1db8d` | Stream-hashed at the pinned revision |
+| `model.safetensors.index.json` | `26d3539b516be613f39563617cb9d33b3f83d401298125be392c80cefb8f7fe5` | 775 tensor entries across four shards |
+
+The tokenizer is BPE (`Qwen2Tokenizer` class in `tokenizer_config.json`). Its
+JSON has 248,044 BPE vocabulary entries plus 26 added tokens (248,070 explicit
+token IDs), while the text config declares 248,320 embedding rows. With
+`tokenizers` 0.22.2, IDs 248,070 through 248,319 have no token string and decode
+to empty text. There is also an upstream stop-token disagreement: the text
+config's `eos_token_id=248044` maps to `<|endoftext|>`, while
+`tokenizer_config.json` names `<|im_end|>` (ID 248046) as `eos_token`. No
+`generation_config.json` exists at this revision. Resolve this against the
+reference generation behavior before serving output or declaring chat-turn
+termination semantics.
+
+The Qwen3.5 pre-tokenizer differs from the existing vBuf-ML Qwen2 regex: it
+uses Unicode combining marks, splits numeric runs one digit at a time, and has
+Qwen3.5-specific whitespace behavior. The current runtime tokenizer only
+accepts its existing Qwen2 and GPT-2 byte-level profiles. The exact added-token
+and chat-template behavior (including `<tool_call>`, `<function>`,
+`<parameter>`, `<tool_response>`, and `<think>`) has not been integrated or
+qualified for Qwen3.5.
+
+The Hub index declares `total_size=19,306,216,416` weight bytes. The four
+safetensors shard files total 19,306,310,880 bytes including headers. Hub LFS
+metadata reports:
+
+| Shard | Size (bytes) | Hub LFS SHA-256 (not locally rehashed) |
+|---|---:|---|
+| `model.safetensors-00001-of-00004.safetensors` | 5,276,436,216 | `db6f444b43d318c92f360a13a25561a6a65b10c0631b8ed305a426dbaa6c380e` |
+| `model.safetensors-00002-of-00004.safetensors` | 5,335,161,512 | `31c7d7e2dd5d207840b31cc59083c8f4c4718959149e0358c0364052bb9a0330` |
+| `model.safetensors-00003-of-00004.safetensors` | 5,368,717,440 | `7ec36ba3a4176a44c3c0876ad80c56a2f70c84bf008d82e9501df642f17dadec` |
+| `model.safetensors-00004-of-00004.safetensors` | 3,325,995,712 | `b62b0c4cd7e44edee103ee8f4fe225f246d5e768e07bfd5f25b63a8aa1fdd0c6` |
+
+No aggregate checkpoint hash was calculated. The weight shards were not
+fetched, so their Hub LFS hashes are provenance metadata, not locally verified
+artifact hashes. No quantized checkpoint was selected or substituted.
+
+## Implemented source-level contracts
+
+`rust/vbuf-ml/src/qwen35_text.rs` is an isolated vBuf-ML semantic profile; no
+generic vBuf wire-format or navigation behavior changed. It currently:
+
+- Parses and validates the pinned HF text architecture and hybrid layer order.
+- Checks `prompt_tokens + completion_reserve <= 262144` with overflow
+  rejection. A planner test accepts `253952 + 8192`; one additional prompt
+  token is rejected. This is arithmetic testing, not runtime capacity evidence.
+- Produces bounded prompt token ranges. Tests cover a 253,952-token prompt in
+  62 chunks of at most 4,096 tokens. No model kernels execute these ranges.
+- Estimates one sequence's persistent state at maximum context, assuming
+  2-byte full-attention K/V and 4-byte recurrent/convolution state:
+  - full-attention K/V: 8 GiB;
+  - DeltaNet matrix state: 48 MiB;
+  - convolution history: 2.25 MiB;
+  - total: 8,642,625,536 bytes (about 8.049 GiB).
+
+These are derived allocation-size estimates, not measured allocations. They
+exclude weights, activations, backend scratch, allocator/device overhead,
+concurrent sequences, and actual state lifecycle behavior. The single-device
+budget helper intentionally does not sum GPU capacities or decide placement.
+
+## Runtime and qualification boundary
+
+The current canonical direct vBuf-ML/Qwen3 runtime is not a Qwen3.5 runtime:
+
+- The C++ model opener requires architecture `qwen3` and has exact Qwen3-14B
+  artifact qualification plus a separately gated experimental Qwen3-8B path.
+- The compatibility server caps the qualified Qwen3 path at 1,032 context
+  positions and the experimental Qwen3-8B path at 32,768. Those defaults and
+  production identities were not changed.
+- Its persistent cache is Qwen3 full-attention K/V. The direct runtime has no
+  Qwen3.5 DeltaNet recurrent/convolution state, hybrid layer graph, or MRoPE
+  execution path.
+- The existing Rust runtime does not lower or execute Qwen3.5 Gated DeltaNet.
+  The pinned GGML source exposes relevant operators, and the separate
+  llama.cpp checkout at `a97123e497968f3440264c0464a7adc7c999c027` contains a
+  Qwen3.5 graph implementation used as a read-only architectural reference.
+  Neither fact qualifies a vBuf-ML runtime, and the llama.cpp model loader was
+  not extended or made the runtime owner.
+- No Qwen3.5 optimizer was added. There is no specialized path or canonical
+  fallback to test until a correct direct-runtime baseline exists.
+
+Hardware observed earlier in the investigation includes an RTX 3060 with 12
+GiB VRAM and an RTX 2080 SUPER with 8 GiB, with about 1.2 GiB occupied on the
+latter by an unrelated active process. These capacities were not combined and
+no process was terminated. BF16 checkpoint size alone exceeds either card's
+VRAM, and the 8 GiB estimated K/V state leaves additional memory for the model,
+workspace, and execution still required. No Qwen3.5 model run was attempted.
+
+## Gate results
+
+| Gate | Status | Evidence |
+|---|---|---|
+| Pinned model/config identity | **PASS (metadata only)** | Exact config fixture hash and Hub metadata above |
+| Hybrid profile parse | **PASS (source-level)** | Unit test parses the exact pinned config and checks 24/8 layer schedule |
+| Context arithmetic / chunk planner | **PASS (planner only)** | Rust unit tests; no inference request executed |
+| Memory capacity | **NOT QUALIFIED** | Derived state estimate only; no local checkpoint or runtime allocation |
+| Numerical parity | **NOT RUN** | No weights or Qwen3.5 backend path |
+| Semantic parity / long-context retrieval | **NOT RUN** | No inference path |
+| Persistent DeltaNet/KV lifecycle | **NOT IMPLEMENTED OR QUALIFIED** | Planner estimates bytes only |
+| Optimizer and canonical fallback | **NOT IMPLEMENTED OR QUALIFIED** | No Qwen3.5 execution candidate |
+| Pi-Agent tool use | **NOT RUN** | No Qwen3.5 server, tokenizer/template integration, or real model call |
+
+## Verification and next work
+
+Passed:
+
+```text
+cargo test --manifest-path rust/vbuf-ml/Cargo.toml
+17 unit tests passed; all integration tests and doc tests passed.
+```
+
+Workspace-wide `cargo fmt --all -- --check` reports pre-existing formatting
+diffs in unrelated files (`consumer_ffi.rs`, `runtime_tokenizer.rs`, and a
+runtime binary). Those files were not reformatted. The new module was formatted
+individually. Strict `cargo clippy --all-targets -- -D warnings` is blocked
+by existing lints in `consumer_ffi.rs`, `hf_import.rs`, `quantization.rs`,
+`runtime_tokenizer.rs`, and `tokenizer.rs`. Allowing those existing library lint
+categories made `cargo clippy --lib` pass; applying the same allowlist to all
+targets then exposed existing `useless_conversion` and `manual_is_multiple_of`
+lints in `vbuf-ml-import-hf.rs` and `tests/hf_import.rs`. No unrelated lint
+fixes were made.
+
+Next gates require, in order: obtain explicit authorization and a locally
+verified artifact/quantization identity; reconcile the tokenizer's added IDs
+and Qwen3.5 pre-tokenizer/template; implement the canonical direct vBuf-ML
+hybrid layer execution and persistent recurrent/KV session state; validate
+bounded chunked prefill and one-token decode against an independent reference;
+then test the guarded optimizer with fail-closed canonical fallback; finally
+run long-context semantic probes and real isolated Pi tool-use trials. Until
+those pass, Qwen3.5 remains unadmitted and this report does not claim usable
+262,144-token inference.
