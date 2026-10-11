@@ -14,6 +14,7 @@ The original research documents and their Git history are preserved for reproduc
 
 - **2026-10-11** — [Qwen3.5-9B 262K vBuf-ML Runtime Readiness](results/vbuf-ml-integration/qwen35-9b-262k-runtime-readiness.md)
   - Summary: Pins Qwen3.5-9B metadata, qualifies tokenizer vectors, and records source-level context/state planning while leaving inference and Pi-Agent gates blocked.
+- **2026-10-11** — [Qwen3.5-9B tokenizer and text-chat qualification](results/vbuf-ml-integration/qwen35-tokenizer-chat-qualification-20261011.md)
 - **2026-10-10** — [Capture commands and build provenance](results/vbuf-ml-integration/pi-agent-qwen3-8b-second-turn-replay/raw/fixed-prefix-logit-diagnosis-20261010/harness/commands.md)
 - **2026-10-10** — [Debian Alpha package: local build and lifecycle qualification](results/vbuf-ml-debian-alpha-qualification-20261010.md)
   - Summary: First reproducible Debian 13 Alpha package passed local build, package, TPA signature, and APT lifecycle checks; hosted publication remains blocked.
