@@ -19,7 +19,9 @@ pub mod metadata;
 pub mod moe;
 pub mod nested;
 pub mod quantization;
+pub mod qwen35_chat;
 pub mod qwen35_text;
+pub mod qwen35_tokenizer;
 pub mod qwen_moe;
 pub mod range_loading;
 pub mod region_roles;
@@ -82,7 +84,8 @@ pub use representations::{
     representation_name, validate_external_tensor_representation, validate_tensor_representation,
 };
 pub use runtime_tokenizer::{
-    Gpt2ByteLevelTokenizer, MergeRankIndex, RuntimeTokenizerIndexes, TokenIndex,
+    Gpt2ByteLevelTokenizer, MergeRankIndex, Qwen35DecodeReport, Qwen35SkippedToken,
+    Qwen35SkippedTokenKind, Qwen35StreamingDecoder, RuntimeTokenizerIndexes, TokenIndex,
 };
 pub use source::{
     CheckedSourceRange, PersistentSourceMetadata, SourceDescriptor, SourceHash, SourceId,

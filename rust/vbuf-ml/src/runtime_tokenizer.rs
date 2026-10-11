@@ -131,6 +131,24 @@ pub struct RuntimeTokenizerIndexes<'a> {
 ///
 /// The regex and lookup maps are runtime-only; vocabulary, merge ranks, and
 /// special-token identities remain borrowed from the canonical sidecar.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Qwen35SkippedTokenKind {
+    UnassignedModelVocabularyRow,
+    OutsideModelVocabulary,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Qwen35SkippedToken {
+    pub id: u32,
+    pub kind: Qwen35SkippedTokenKind,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Qwen35DecodeReport {
+    pub text: String,
+    pub skipped_tokens: Vec<Qwen35SkippedToken>,
+}
+
 #[derive(Debug)]
 pub struct Gpt2ByteLevelTokenizer<'a> {
     metadata: &'a TokenizerMetadata<'a>,
@@ -169,7 +187,7 @@ impl<'a> Gpt2ByteLevelTokenizer<'a> {
         }
         let pattern = match metadata.pre_tokenizer() {
             Some(PreTokenizer::Qwen3_5) => {
-                r"(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\r\n\p{L}\p{N}]?[\p{L}\p{M}]+|\p{N}| ?[^\s\p{L}\p{M}\p{N}]+[\r\n]*|\s*[\r\n]+"
+                r"(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\r\n\p{L}\p{N}]?[\p{L}\p{M}]+|\p{N}| ?[^\s\p{L}\p{M}\p{N}]+[\r\n]*|\s*[\r\n]+|\s+"
             }
             Some(PreTokenizer::Qwen2 | PreTokenizer::Gpt2ByteLevel) => {
                 r"(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\r\n\p{L}\p{N}]?\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]+[\r\n]*|\s*[\r\n]+|\s+"
@@ -312,8 +330,101 @@ impl<'a> Gpt2ByteLevelTokenizer<'a> {
     }
 
     pub fn decode(&self, tokens: &[u32]) -> Result<String, MlError> {
-        String::from_utf8(self.decode_bytes(tokens)?)
-            .map_err(|_| MlError::new(MlErrorCode::InvalidTokenText, "decoded bytes are not UTF-8"))
+        let bytes = self.decode_bytes(tokens)?;
+        if self.qwen35_pretokenizer {
+            Ok(String::from_utf8_lossy(&bytes).into_owned())
+        } else {
+            String::from_utf8(bytes).map_err(|_| {
+                MlError::new(MlErrorCode::InvalidTokenText, "decoded bytes are not UTF-8")
+            })
+        }
+    }
+
+    /// Hugging Face-compatible Qwen3.5 decoding with explicit reporting for
+    /// token IDs that have model rows but no tokenizer-string assignment.
+    pub fn decode_qwen35(
+        &self,
+        tokens: &[u32],
+        skip_special_tokens: bool,
+    ) -> Result<Qwen35DecodeReport, MlError> {
+        self.ensure_qwen35()?;
+        let (bytes, skipped_tokens) = self.qwen35_token_bytes(tokens, skip_special_tokens)?;
+        Ok(Qwen35DecodeReport {
+            text: String::from_utf8_lossy(&bytes).into_owned(),
+            skipped_tokens,
+        })
+    }
+
+    pub fn streaming_decoder_qwen35(
+        &self,
+        skip_special_tokens: bool,
+    ) -> Result<Qwen35StreamingDecoder<'_, 'a>, MlError> {
+        self.ensure_qwen35()?;
+        Ok(Qwen35StreamingDecoder {
+            tokenizer: self,
+            skip_special_tokens,
+            pending_utf8: Vec::new(),
+        })
+    }
+
+    fn ensure_qwen35(&self) -> Result<(), MlError> {
+        if !self.qwen35_pretokenizer {
+            return Err(MlError::new(
+                MlErrorCode::UnsupportedTokenizerKind,
+                "Qwen3.5 decoding requires the pinned Qwen3.5 tokenizer profile",
+            ));
+        }
+        Ok(())
+    }
+
+    fn qwen35_token_bytes(
+        &self,
+        tokens: &[u32],
+        skip_special_tokens: bool,
+    ) -> Result<(Vec<u8>, Vec<Qwen35SkippedToken>), MlError> {
+        let mut bytes = Vec::new();
+        let mut skipped = Vec::new();
+        for token in tokens {
+            let index = u64::from(*token);
+            if skip_special_tokens
+                && self
+                    .metadata
+                    .token_flags(index)
+                    .is_some_and(|flags| flags & 2 != 0)
+            {
+                continue;
+            }
+            let Some(text) = self.metadata.token_text(index) else {
+                if index < self.metadata.token_count() {
+                    return Err(MlError::new(
+                        MlErrorCode::InvalidTokenText,
+                        "assigned Qwen3.5 token text is invalid",
+                    ));
+                }
+                skipped.push(Qwen35SkippedToken {
+                    id: *token,
+                    kind: if index < crate::qwen35_tokenizer::QWEN35_MODEL_VOCAB_SIZE as u64 {
+                        Qwen35SkippedTokenKind::UnassignedModelVocabularyRow
+                    } else {
+                        Qwen35SkippedTokenKind::OutsideModelVocabulary
+                    },
+                });
+                continue;
+            };
+            if self.literal_token_ids.contains(token) {
+                bytes.extend_from_slice(text.as_bytes());
+            } else {
+                for character in text.chars() {
+                    bytes.push(unicode_to_byte(character).ok_or_else(|| {
+                        MlError::new(
+                            MlErrorCode::InvalidTokenText,
+                            "token is not GPT-2 byte-level text",
+                        )
+                    })?);
+                }
+            }
+        }
+        Ok((bytes, skipped))
     }
 
     fn added_token_at(&self, text: &str, cursor: usize) -> Option<(u32, usize)> {
@@ -335,16 +446,28 @@ impl<'a> Gpt2ByteLevelTokenizer<'a> {
     fn encode_ordinary(&self, text: &str, output: &mut Vec<u32>) -> Result<(), MlError> {
         let mut cursor = 0usize;
         while cursor < text.len() {
-            let piece = self.pretokenizer.find_at(text, cursor);
-            let piece_end = match piece {
-                Some(piece) if piece.start() == cursor => piece.end(),
-                _ if self.qwen35_pretokenizer
-                    && text[cursor..]
-                        .chars()
-                        .next()
-                        .is_some_and(char::is_whitespace) =>
-                {
-                    self.qwen35_whitespace_end(text, cursor)
+            if self.qwen35_pretokenizer
+                && let Some(prefix_end) = qwen35_trailing_whitespace_prefix_end(text, cursor)
+            {
+                self.encode_piece(&text[cursor..prefix_end], output)?;
+                cursor = prefix_end;
+                continue;
+            }
+            match self.pretokenizer.find_at(text, cursor) {
+                Some(piece) if piece.start() == cursor => {
+                    self.encode_piece(piece.as_str(), output)?;
+                    cursor = piece.end();
+                }
+                Some(piece) if self.qwen35_pretokenizer => {
+                    // Hugging Face Split(behavior=Isolated) retains unmatched
+                    // spans as separate pre-tokenized pieces. They may not
+                    // merge BPE symbols with the following regex match.
+                    self.encode_piece(&text[cursor..piece.start()], output)?;
+                    cursor = piece.start();
+                }
+                None if self.qwen35_pretokenizer => {
+                    self.encode_piece(&text[cursor..], output)?;
+                    break;
                 }
                 _ => {
                     return Err(MlError::new(
@@ -352,9 +475,7 @@ impl<'a> Gpt2ByteLevelTokenizer<'a> {
                         "GPT-2 pre-tokenizer left an uncovered input span",
                     ));
                 }
-            };
-            self.encode_piece(&text[cursor..piece_end], output)?;
-            cursor = piece_end;
+            }
         }
         Ok(())
     }
@@ -375,25 +496,6 @@ impl<'a> Gpt2ByteLevelTokenizer<'a> {
         }
         output.extend(symbols);
         Ok(())
-    }
-
-    fn qwen35_whitespace_end(&self, text: &str, start: usize) -> usize {
-        let mut end = start;
-        let mut last_char_start = start;
-        let mut count = 0usize;
-        for (offset, character) in text[start..].char_indices() {
-            if !character.is_whitespace() {
-                break;
-            }
-            last_char_start = start + offset;
-            end = start + offset + character.len_utf8();
-            count += 1;
-        }
-        if end < text.len() && count > 1 {
-            last_char_start
-        } else {
-            end
-        }
     }
 
     fn merge_symbols(&self, mut symbols: Vec<u32>) -> Result<Vec<u32>, MlError> {
@@ -433,6 +535,83 @@ impl<'a> Gpt2ByteLevelTokenizer<'a> {
         }
         Ok(symbols)
     }
+}
+
+#[derive(Debug)]
+pub struct Qwen35StreamingDecoder<'tokenizer, 'metadata> {
+    tokenizer: &'tokenizer Gpt2ByteLevelTokenizer<'metadata>,
+    skip_special_tokens: bool,
+    pending_utf8: Vec<u8>,
+}
+
+impl Qwen35StreamingDecoder<'_, '_> {
+    /// Append token IDs and return only text whose UTF-8 boundary is complete.
+    /// Unassigned/out-of-range IDs are omitted from text but listed explicitly.
+    pub fn push(&mut self, tokens: &[u32]) -> Result<Qwen35DecodeReport, MlError> {
+        let (bytes, skipped_tokens) = self
+            .tokenizer
+            .qwen35_token_bytes(tokens, self.skip_special_tokens)?;
+        self.pending_utf8.extend_from_slice(&bytes);
+        let text = decode_complete_utf8(&mut self.pending_utf8);
+        Ok(Qwen35DecodeReport {
+            text,
+            skipped_tokens,
+        })
+    }
+
+    /// Flush the final incomplete UTF-8 sequence using the pinned `replace`
+    /// decoder policy. Call once the generation stream has ended.
+    pub fn finish(&mut self) -> String {
+        let text = String::from_utf8_lossy(&self.pending_utf8).into_owned();
+        self.pending_utf8.clear();
+        text
+    }
+}
+
+fn decode_complete_utf8(pending: &mut Vec<u8>) -> String {
+    let mut output = String::new();
+    loop {
+        match std::str::from_utf8(pending) {
+            Ok(valid) => {
+                output.push_str(valid);
+                pending.clear();
+                return output;
+            }
+            Err(error) => {
+                let valid_bytes = error.valid_up_to();
+                if valid_bytes != 0 {
+                    // `valid_up_to` is guaranteed to end at a UTF-8 boundary.
+                    output.push_str(std::str::from_utf8(&pending[..valid_bytes]).unwrap());
+                    pending.drain(..valid_bytes);
+                }
+                match error.error_len() {
+                    Some(invalid_bytes) => {
+                        output.push('\u{fffd}');
+                        pending.drain(..invalid_bytes);
+                    }
+                    None => return output,
+                }
+            }
+        }
+    }
+}
+
+fn qwen35_trailing_whitespace_prefix_end(text: &str, start: usize) -> Option<usize> {
+    let mut end = start;
+    let mut last_start = start;
+    let mut count = 0usize;
+    for (offset, character) in text[start..].char_indices() {
+        if !character.is_whitespace() {
+            break;
+        }
+        if matches!(character, '\r' | '\n') {
+            return None;
+        }
+        last_start = start + offset;
+        end = start + offset + character.len_utf8();
+        count += 1;
+    }
+    (count > 1 && end < text.len()).then_some(last_start)
 }
 
 fn byte_to_unicode(byte: u8) -> char {

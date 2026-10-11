@@ -146,20 +146,66 @@ non-special control strings such as `<tool_call>` stay atomic and decode as
 literal token text. This interpretation is scoped to Qwen3.5; existing
 Qwen2/GPT-2 profiles continue to use their prior special-ID handling.
 
-A reduced test table derived from the exact pinned tokenizer files passed 318
-input vectors against Hugging Face `tokenizers` 0.22.2, comparing original
-model token IDs, token strings, and decoded text. The set includes Unicode
-normalization, numeric and whitespace boundaries, tool markers, and all 26
-added tokens. This qualifies only those tokenizer vectors; the complete
-Qwen3.5 vocabulary has not been converted into a vBuf-ML sidecar or connected
-to inference.
+A complete tokenizer-only vBuf v0.6 envelope is generated from the six
+text/configuration files at `Qwen/Qwen3.5-9B` revision
+`c202236235762e1c871ad0ccb60c8ee5ba337b9a`. It contains the full ordered token
+pool, offsets, merge-rank arrays, special/added-token flags, pinned profile
+identities, and exact chat-template bytes. Its TensorDirectory is intentionally
+empty: this fixture is not a model checkpoint and contains no weights.
 
-Tokenizer/model generation admission remains blocked. The text config uses EOS
-ID 248044 (`<|endoftext|>`), while tokenizer config names ID 248046
-(`<|im_end|>`); the pinned model has no generation config. The model has 248320
-embedding rows, while the tokenizer provides strings only through ID 248069,
-leaving 250 output rows without token strings. Neither termination policy nor
-those generated IDs are guessed by this implementation.
+The vocabulary inventory is explicitly classified:
+
+| IDs | Meaning | Count |
+| --- | --- | ---: |
+| `0–248043` | base BPE vocabulary | 248,044 |
+| `248044–248069` | `tokenizer.json` added tokens | 26 |
+| `248070–248076` | `tokenizer_config.json`-only added tokens | 7 |
+| `248077–248319` | embedding/output rows without token strings | 243 |
+
+All 33 added tokens are represented by token-flag bit 0; 21 are special-token
+entries (bit 1). The seven config-only audio/TTS tokens are not treated as
+unknown IDs. The profile's `classify_qwen35_token_id` API reports the five
+ranges separately as base BPE, JSON-added, config-only-added, unassigned model
+row, or outside the model vocabulary. Model-config EOS is 248044
+(`<|endoftext|>`); tokenizer-config EOS is 248046 (`<|im_end|>`), and tokenizer
+PAD is 248044. These separate roles are preserved in the manifest and tokenizer
+metadata. No model-generation stopping policy is inferred from this disagreement.
+
+Against the serialized `tokenizer.json` reference (`tokenizers` 0.22.2), with
+the seven config-only `AddedToken` records applied, 441 vectors match in IDs,
+token strings, and decoded text: the earlier 318 vectors plus 123 added cases
+cover normalization, combining marks, multilingual text, emojis, zero-width
+characters, whitespace/newline boundaries, NUL, 96 deterministic mixed-Unicode
+samples, source-code/markup formats, all 33 added tokens, and a 53-KiB
+uninterrupted string. The profile also requires the source `pretokenize_regex`
+to match the serialized tokenizer JSON exactly.
+
+There is a pinned upstream implementation distinction: Transformers 5.14.1
+resolves `AutoTokenizer` to `Qwen2Tokenizer`, whose source hard-codes an older
+regex and does not use the pinned `tokenizer_config.json` `pretokenize_regex`.
+That class differs from the serialized tokenizer JSON/config profile on 19 of
+the 441 audit inputs, primarily around combining marks. The vBuf profile follows
+the explicit pinned tokenizer JSON and config regex; the report records this
+compatibility boundary and does not claim parity with the legacy class's
+hard-coded regex.
+
+The pinned text-only Jinja template is preserved byte-for-byte and rendered by
+the isolated vBuf-ML chat module. Eight cases match Transformers 5.14.1 / Jinja
+3.1.6 output byte-for-byte, then match token IDs, token strings, decoded text,
+and context accounting against the serialized tokenizer JSON reference. Cases
+cover multi-turn prompts, generation prompts, reasoning extraction, ordered
+JSON tool schemas, tool-call/tool-response cycles, consecutive tool responses,
+Unicode, scalar formatting, and context boundaries. Image/video/audio content
+is rejected by the text-only API. The reference and regression artifacts are
+listed in `research/results/vbuf-ml-integration/qwen35-tokenizer-chat-qualification-20261011.md`.
+
+Decoding uses the pinned `errors=replace` behavior, including streaming UTF-8
+boundary handling. IDs in the 243 unassigned model rows and IDs outside the
+model vocabulary produce empty decoded text like the HF decoder, but the
+Qwen3.5 detailed decoder reports each skipped ID and its classification. This
+is not a decision about whether generated unassigned IDs should be emitted or
+terminate generation. The tokenizer/template path remains experimental and is
+not connected to inference or model admission.
 
 ## Validation and loading
 
@@ -172,6 +218,10 @@ any richer roles.
 The tokenizer control region remains bounded to 4096 bytes. Large merge arrays
 and chat-template data are separate canonical ranges. Model open does not parse
 or touch tokenizer regions. Tokenizer initialization resolves and validates the
-vocabulary and merge ranges; chat data is only accessed when requested.
+vocabulary and merge ranges; chat data is only accessed when requested. The
+Qwen3.5 conversion/verification tool is `vbuf-ml-qwen35-tokenizer`; its
+`convert`, `verify`, `check-vectors`, `render-chat`, and `check-chat-vectors`
+commands are qualification tooling, not model admission.
 
-No tokenizer execution methods are present on storage-layer types.
+No tokenizer execution methods are present on storage-layer types; runtime
+encoding, decoding, and chat rendering operate on validated borrowed metadata.
